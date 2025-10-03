@@ -1,4 +1,5 @@
-import { ParquetSchema, ParquetWriter } from "parquetjs-lite";
+import { ParquetSchema, ParquetWriter } from "@william.chau/parquetjs-lite";
+import parquet from "@william.chau/parquetjs-lite";
 import axios from "axios";
 import * as cheerio from "cheerio";
 import { URL } from "url";
