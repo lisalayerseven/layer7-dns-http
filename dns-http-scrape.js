@@ -26,14 +26,15 @@ resolver.setServers(["127.0.0.1"]);   // Unbound listening on localhost
 // --- Schema ---
 const schema = new ParquetSchema({
   domain:        { type: "UTF8" },
-  has_dns:       { type: "INT64" },
+  has_dns:       { type: "BOOLEAN" },
   dns_ips:       { type: "UTF8", optional: true },
-  http_ok:       { type: "INT64" },
+  http_ok:       { type: "BOOLEAN" },
   final_url:     { type: "UTF8", optional: true },
-  status_code:   { type: "INT64" },
+  status_code:   { type: "INT64", optional: true },
   used_https:    { type: "BOOLEAN" },
-  text_ok:       { type: "INT64" },
-  homepage_text: { type: "UTF8", optional: true }
+  text_ok:       { type: "BOOLEAN" },
+  homepage_text: { type: "UTF8", optional: true },
+  stage:         { type: "UTF8" }  // NEW: pipeline stage reached
 });
 
 // --- Metrics helpers ---
@@ -57,8 +58,8 @@ function activeHandles() {
 async function dnsLookup(domain) {
   return new Promise((resolve) => {
     resolver.resolve4(domain, (err, addresses) => {
-      if (err) return resolve({ has_dns: 0, dns_ips: null });
-      resolve({ has_dns: 1, dns_ips: addresses.join(";") });
+      if (err) return resolve({ has_dns: false, dns_ips: null });
+      resolve({ has_dns: true, dns_ips: addresses.join(";") });
     });
   });
 }
@@ -92,10 +93,10 @@ async function httpCheck(domain) {
       if (resp.status >= 200 && resp.status < 400) {
         const finalUrl = resp.request.res.responseUrl;
         if (isIpHost(finalUrl)) {
-          return { http_ok: 0, final_url: null, status_code: null, used_https: false };
+          return { http_ok: false, final_url: null, status_code: null, used_https: false };
         }
         return {
-          http_ok: 1,
+          http_ok: true,
           final_url: finalUrl,
           status_code: resp.status,
           used_https: finalUrl.startsWith("https://"),
@@ -105,7 +106,7 @@ async function httpCheck(domain) {
       continue;
     }
   }
-  return { http_ok: 0, final_url: null, status_code: null, used_https: false };
+  return { http_ok: false, final_url: null, status_code: null, used_https: false };
 }
 
 async function fetchText(url) {
@@ -120,11 +121,11 @@ async function fetchText(url) {
       let text = $("body").text();
       text = text.replace(/\s+/g, " ").trim();
       if (text.length >= TEXT_MIN_CHARS) {
-        return { homepage_text: text.slice(0, TEXT_MAX_CHARS), text_ok: 1 };
+        return { homepage_text: text.slice(0, TEXT_MAX_CHARS), text_ok: true };
       }
     }
   } catch {}
-  return { homepage_text: null, text_ok: 0 };
+  return { homepage_text: null, text_ok: false };
 }
 
 // --- Utility: write final parquet ---
@@ -161,30 +162,40 @@ async function main() {
 
   for (let i = 0; i < rows.length; i++) {
     const domain = rows[i].domain;
+    let stage = "fail"; // default if nothing works
 
     try {
       // DNS
       const { has_dns, dns_ips } = await dnsLimit(() => dnsLookup(domain));
-      if (has_dns) dnsCount++; else { dnsErrors++; continue; }
+      if (!has_dns) { dnsErrors++; results.push({ domain, has_dns, dns_ips, http_ok: false, final_url: null, status_code: null, used_https: false, text_ok: false, homepage_text: null, stage }); continue; }
+      dnsCount++;
+      stage = "dns";
 
       // HTTP
       const httpRes = await httpLimit(() => httpCheck(domain));
-      if (httpRes.http_ok) httpCount++; else { httpErrors++; continue; }
+      if (!httpRes.http_ok) { httpErrors++; results.push({ domain, has_dns, dns_ips, ...httpRes, text_ok: false, homepage_text: null, stage }); continue; }
+      httpCount++;
+      stage = "http";
 
       // TEXT
       const textRes = await textLimit(() => fetchText(httpRes.final_url));
-      if (textRes.text_ok) textCount++; else textErrors++;
+      if (!textRes.text_ok) { textErrors++; results.push({ domain, has_dns, dns_ips, ...httpRes, ...textRes, stage }); continue; }
+      textCount++;
+      stage = "text";
 
+      // Success
       results.push({
         domain,
         has_dns,
         dns_ips,
         ...httpRes,
         ...textRes,
+        stage
       });
 
     } catch (e) {
       dnsErrors++;
+      results.push({ domain, has_dns: false, dns_ips: null, http_ok: false, final_url: null, status_code: null, used_https: false, text_ok: false, homepage_text: null, stage: "fail" });
     }
 
     if ((i + 1) % LOG_INTERVAL === 0 || i + 1 === rows.length) {
