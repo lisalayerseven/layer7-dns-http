@@ -1,11 +1,11 @@
-import { ParquetSchema, ParquetWriter } from "@william.chau/parquetjs-lite";
 import parquet from "@william.chau/parquetjs-lite";
+const { ParquetSchema, ParquetWriter, ParquetReader } = parquet;
+
 import axios from "axios";
 import * as cheerio from "cheerio";
 import { URL } from "url";
 import dns from "dns";
 import pLimit from "p-limit";
-import parquet from "parquetjs-lite";
 import os from "os";
 
 // --- Config ---
@@ -35,7 +35,7 @@ const schema = new ParquetSchema({
   used_https:    { type: "BOOLEAN" },
   text_ok:       { type: "BOOLEAN" },
   homepage_text: { type: "UTF8", optional: true },
-  stage:         { type: "UTF8" }  // NEW: pipeline stage reached
+  stage:         { type: "UTF8" }  // how far it got
 });
 
 // --- Metrics helpers ---
@@ -141,7 +141,7 @@ async function writeParquetFile(filename, rows) {
 // --- Main pipeline ---
 async function main() {
   console.log("Loading input parquet...");
-  const reader = await parquet.ParquetReader.openFile(INPUT_FILE);
+  const reader = await ParquetReader.openFile(INPUT_FILE);
   const cursor = reader.getCursor();
   const rows = [];
   let rec;
@@ -168,19 +168,31 @@ async function main() {
     try {
       // DNS
       const { has_dns, dns_ips } = await dnsLimit(() => dnsLookup(domain));
-      if (!has_dns) { dnsErrors++; results.push({ domain, has_dns, dns_ips, http_ok: false, final_url: null, status_code: null, used_https: false, text_ok: false, homepage_text: null, stage }); continue; }
+      if (!has_dns) {
+        dnsErrors++;
+        results.push({ domain, has_dns, dns_ips, http_ok: false, final_url: null, status_code: null, used_https: false, text_ok: false, homepage_text: null, stage });
+        continue;
+      }
       dnsCount++;
       stage = "dns";
 
       // HTTP
       const httpRes = await httpLimit(() => httpCheck(domain));
-      if (!httpRes.http_ok) { httpErrors++; results.push({ domain, has_dns, dns_ips, ...httpRes, text_ok: false, homepage_text: null, stage }); continue; }
+      if (!httpRes.http_ok) {
+        httpErrors++;
+        results.push({ domain, has_dns, dns_ips, ...httpRes, text_ok: false, homepage_text: null, stage });
+        continue;
+      }
       httpCount++;
       stage = "http";
 
       // TEXT
       const textRes = await textLimit(() => fetchText(httpRes.final_url));
-      if (!textRes.text_ok) { textErrors++; results.push({ domain, has_dns, dns_ips, ...httpRes, ...textRes, stage }); continue; }
+      if (!textRes.text_ok) {
+        textErrors++;
+        results.push({ domain, has_dns, dns_ips, ...httpRes, ...textRes, stage });
+        continue;
+      }
       textCount++;
       stage = "text";
 
