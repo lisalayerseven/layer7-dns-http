@@ -1,12 +1,26 @@
 {
   "name": "layer7-dns-http",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "DNS + HTTP + text scrape pipeline",
+  "type": "module",
+  "main": "dns-http-scrape.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node dns-http-scrape.js",
+    "debug": "node --inspect dns-http-scrape.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC"
+  "keywords": [
+    "dns",
+    "http",
+    "scrape",
+    "pipeline",
+    "layer7"
+  ],
+  "author": "Layer7",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.7.0",
+    "cheerio": "^1.0.0-rc.12",
+    "p-limit": "^4.0.0",
+    "parquetjs-lite": "^0.4.0"
+  }
 }
