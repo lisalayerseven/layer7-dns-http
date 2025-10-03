@@ -19,7 +19,7 @@ const DNS_CONCURRENCY = 100;
 const HTTP_CONCURRENCY = 20;
 const TEXT_CONCURRENCY = 10;
 
-// --- Init Resolver (point at Unbound daemon) ---
+// --- Init Resolver (Unbound daemon) ---
 const resolver = new dns.Resolver();
 resolver.setServers(["127.0.0.1"]);   // Unbound listening on localhost
 
@@ -53,11 +53,11 @@ function activeHandles() {
   return `Handles: ${process._getActiveHandles().length}`;
 }
 
-// --- DNS lookup via Unbound daemon ---
+// --- DNS lookup via Unbound ---
 async function dnsLookup(domain) {
   return new Promise((resolve) => {
     resolver.resolve4(domain, (err, addresses) => {
-      if (err) return resolve({ has_dns: 0, dns_ips: "" });
+      if (err) return resolve({ has_dns: 0, dns_ips: null });
       resolve({ has_dns: 1, dns_ips: addresses.join(";") });
     });
   });
@@ -92,7 +92,7 @@ async function httpCheck(domain) {
       if (resp.status >= 200 && resp.status < 400) {
         const finalUrl = resp.request.res.responseUrl;
         if (isIpHost(finalUrl)) {
-          return { http_ok: 0, final_url: "", status_code: 0, used_https: false };
+          return { http_ok: 0, final_url: null, status_code: null, used_https: false };
         }
         return {
           http_ok: 1,
@@ -105,7 +105,7 @@ async function httpCheck(domain) {
       continue;
     }
   }
-  return { http_ok: 0, final_url: "", status_code: 0, used_https: false };
+  return { http_ok: 0, final_url: null, status_code: null, used_https: false };
 }
 
 async function fetchText(url) {
@@ -124,7 +124,7 @@ async function fetchText(url) {
       }
     }
   } catch {}
-  return { homepage_text: "", text_ok: 0 };
+  return { homepage_text: null, text_ok: 0 };
 }
 
 // --- Utility: write final parquet ---
