@@ -21,6 +21,6 @@
     "axios": "^1.7.0",
     "cheerio": "^1.0.0-rc.12",
     "p-limit": "^4.0.0",
-    "parquetjs-lite": "^0.3.0"
+    "@william.chau/parquetjs-lite": "^0.8.9"
   }
 }
