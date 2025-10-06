@@ -1,26 +1,28 @@
 {
   "name": "layer7-dns-http",
   "version": "1.0.0",
-  "description": "DNS + HTTP + text scrape pipeline",
+  "description": "DNS + HTTP + text scrape pipeline with Unbound + DuckDB + Parquet output",
   "type": "module",
-  "main": "dns-http-scrape.js",
+  "main": "dns-http-text-metrics.js",
   "scripts": {
-    "start": "node dns-http-scrape.js",
-    "debug": "node --inspect dns-http-scrape.js"
+    "start": "node dns-http-text-metrics.js",
+    "test": "echo \"No tests specified\" && exit 0"
   },
   "keywords": [
     "dns",
     "http",
-    "scrape",
-    "pipeline",
-    "layer7"
+    "parquet",
+    "duckdb",
+    "scraper",
+    "async"
   ],
-  "author": "Layer7",
-  "license": "MIT",
+  "author": "",
+  "license": "ISC",
   "dependencies": {
     "@william.chau/parquetjs-lite": "^0.8.9",
     "axios": "^1.7.0",
-    "cheerio": "^1.0.0-rc.12",
+    "cheerio": "1.0.0-rc.12",
+    "duckdb": "^0.10.0",
     "p-limit": "^4.0.0"
   }
 }

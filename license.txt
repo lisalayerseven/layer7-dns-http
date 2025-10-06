@@ -1,0 +1,17 @@
+Copyright (c) 2025 Layer Seven Solutions, LLC. All rights reserved.
+
+This software and associated documentation files (the “Software”) are proprietary 
+to Layer Seven Solutions, LLC and are protected by applicable intellectual property 
+and trade secret law.
+
+Unauthorized copying, modification, distribution, or use of this Software, in whole 
+or in part, is strictly prohibited without the express written permission of 
+Layer Seven Solutions, LLC.
+
+The Software is provided “as is,” without warranty of any kind, express or implied, 
+including but not limited to the warranties of merchantability, fitness for a 
+particular purpose, and noninfringement. In no event shall the authors or copyright 
+holders be liable for any claim, damages, or other liability arising from, out of, 
+or in connection with the Software or the use or other dealings in the Software.
+
+For licensing inquiries, contact: lisa@layerseven.co
