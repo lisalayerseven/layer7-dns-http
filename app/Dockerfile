@@ -1,4 +1,4 @@
-FROM node:20.17.0-slim@sha256:<digest>
+FROM node:20.17.0-slim
 WORKDIR /usr/src/app
 RUN apt update && apt install -y dnsutils && rm -rf /var/lib/apt/lists/*
 COPY package*.json ./
