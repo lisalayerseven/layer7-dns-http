@@ -1,0 +1,13 @@
+{
+  "name": "testapp",
+  "version": "1.0.0",
+  "description": "Simple DNS/HTTP test app for L7S pipeline",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "node-fetch": "^3.3.2"
+  }
+}
