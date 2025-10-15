@@ -1,0 +1,17 @@
+version: "3.9"
+
+services:
+  unbound:
+    image: mvance/unbound:latest
+    container_name: unbound
+    restart: unless-stopped
+    ports:
+      - "53:53/udp"
+      - "53:53/tcp"
+
+  testapp:
+    build: ./app
+    container_name: testapp
+    depends_on:
+      - unbound
+    command: ["node", "index.js"]
