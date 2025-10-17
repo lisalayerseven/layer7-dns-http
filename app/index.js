@@ -1,6 +1,6 @@
 import { exec } from "child_process";
 
-const target = process.env.TEST_DOMAIN || "examplejosef.org";
+const target = process.env.TEST_DOMAIN || "josef.org";
 console.log(`Running dig against Unbound for ${target}...`);
 
 exec(`dig @unbound ${target} +short`, (err, stdout, stderr) => {
